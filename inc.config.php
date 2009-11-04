@@ -5,4 +5,6 @@ define('CONSTANT_USERNAME', 'username');    // your username
 define('CONSTANT_PASSWORD', 'password');     //your password
 define('CONSTANT_DATABASE', 'database-name');   // name of the database
 
+define('PATH_TO_CACHE', 'cache/');
+
 ?>

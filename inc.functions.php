@@ -414,7 +414,7 @@ ENDTEXT
 	**                                                            **
 	***************************************************************/
 	function getCacheFilePath() {
-		return $_SERVER['DOCUMENT_ROOT'] . '/cache/' . $this->makeCacheFileName($_SERVER['REQUEST_URI']);
+		return $_SERVER['DOCUMENT_ROOT'] . '/' . PATH_TO_CACHE . $this->makeCacheFileName($_SERVER['REQUEST_URI']);
 	}
 	
 	/***************************************************************
@@ -2477,7 +2477,7 @@ class CacheUtil {
 	}
 	
 	function getPath($dataname) {
-		return 'cache/' . $dataname;
+		return PATH_TO_CACHE . $dataname;
 	}
 	
 	function saveFile($path,$datastring) {

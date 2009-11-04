@@ -113,6 +113,66 @@ function isGUID($value)
 			&& (strlen($value)==38);
 }
 
+function isEmail($email) {
+    return preg_match('|^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]{2,})+$|i', $email);
+};
+
+function connect() {
+	$link = mysql_connect(HOSTNAME, USERNAME, PASSWORD);
+	if ($link && mysql_select_db(DATABASE))
+		return ($link);
+	else die(mysql_error());
+		return (FALSE);
+} // END connect
+
+function xml_encode($mixed,$domElement=null,$DOMDocument=null){
+    if(is_null($DOMDocument)){
+        $DOMDocument=new DOMDocument;
+        $DOMDocument->formatOutput=true;
+        xml_encode($mixed,$DOMDocument,$DOMDocument);
+        echo $DOMDocument->saveXML();
+    }
+    else{
+        if(is_array($mixed)){
+            foreach($mixed as $index=>$mixedElement){
+                if(is_int($index)){
+                    if($index==0){
+                        $node=$domElement;
+                    }
+                    else{
+                        $node=$DOMDocument->createElement($domElement->tagName);
+                        $domElement->parentNode->appendChild($node);
+                    }
+                }
+                else{
+                    $plural=$DOMDocument->createElement($index);
+                    $domElement->appendChild($plural);
+                    $node=$plural;
+                    if(rtrim($index,'s')!==$index){
+                        $singular=$DOMDocument->createElement(rtrim($index,'s'));
+                        $plural->appendChild($singular);
+                        $node=$singular;
+                    }
+                }
+                xml_encode($mixedElement,$node,$DOMDocument);
+            }
+        }
+        else{
+            $domElement->appendChild($DOMDocument->createTextNode($mixed));
+        }
+    }
+}
+
+function csv($array) {
+	$csv = "";
+	for( $i = 0; $i < count($array); $i++ ) {
+		$csv .= '"' . str_replace('"', '""', $array[$i]) . '"';
+		if( $i < count($array) - 1 ) $csv .= ",";
+	}
+	return $csv;
+}
+
+
 
 class Helper {
 
@@ -2391,6 +2451,78 @@ $this->globalNav();
 }
 
 
+class CacheUtil {
+		
+	var $use_cache = true;
+		
+	function useCache($value) {
+		$this->use_cache = (bool)$value;
+	}
+	
+	function getProductData($header,$filter) {
+		$dataname = 'get_product_data_' . strtolower($header);
+
+		if ($this->cacheValid($dataname)) {
+			$data = $this->getCache($dataname);
+			$out = array();
+			foreach ($data as $row) {
+				$out[] = $row;
+			}
+			return $out; // print_r($excluded_products_ids);
+		}
+		$this->saveCache($dataname,$out);
+		return $out;
+	}
+	
+	function getPath($dataname) {
+		return 'cache/' . $dataname;
+	}
+	
+	function saveFile($path,$datastring) {
+		$filename = $path;
+	    if (!$handle = fopen($filename, 'a')) {
+	         echo "Cannot open file ($filename)";
+	         exit;
+	    }
+	    // Write $somecontent to our opened file.
+	    if (fwrite($handle, $datastring) === FALSE) {
+	        echo "Cannot write to file ($filename)";
+	        exit;
+	    }
+		fclose($handle);	
+	}
+	
+	function cacheValid($dataname) {
+		
+		if ($this->use_cache == false) {
+			return false;
+		}
+		$path = $this->getPath($dataname);
+		$nowtime = time();
+		$modificationtime = filemtime($path);
+		$file_age_in_seconds = $nowtime - $modificationtime;
+		$one_day_in_seconds      = 24    * 60 * 60;
+		$half_day_in_seconds     = 12    * 60 * 60;
+		$one_hour_in_seconds     =  1    * 60 * 60;
+		$half_hour_in_seconds    =  0.5  * 60 * 60;
+		$fifteen_mins_in_seconds =  0.25 * 60 * 60;
+		$ten_mins_in_seconds     =  0.17 * 60 * 60;
+		$interval = $ten_mins_in_seconds;
+		return (file_exists($path) && $file_age_in_seconds < $interval);
+	}
+
+	function saveCache($dataname,$datavalue) {
+		$path = $this->getPath($dataname);
+		$data = serialize($datavalue);
+		$this->saveFile($path,$data);
+	}
+
+	function getCache($dataname) {
+		$path = $this->getPath($dataname);
+		return unserialize(file_get_contents($path));
+	}
+	
+}
 
 
 ?>
